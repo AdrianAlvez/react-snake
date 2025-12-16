@@ -1,83 +1,13 @@
 import { useEffect, useMemo, useState, type ReactElement } from 'react'
-
-type Vec = { x: number; y: number }
-type Direction = 'up' | 'down' | 'left' | 'right'
-
-type GameState = {
-  snake: Vec[]
-  direction: Direction
-  food: Vec
-  score: number
-  running: boolean
-  gameOver: boolean
-}
-
-const GRID_SIZE = 20
-const TICK_MS = 120
-
-const isSame = (a: Vec, b: Vec) => a.x === b.x && a.y === b.y
-
-const isOpposite = (a: Direction, b: Direction) => {
-  return (
-    (a === 'up' && b === 'down') ||
-    (a === 'down' && b === 'up') ||
-    (a === 'left' && b === 'right') ||
-    (a === 'right' && b === 'left')
-  )
-}
-
-const move = (head: Vec, dir: Direction): Vec => {
-  switch (dir) {
-    case 'up':
-      return { x: head.x, y: head.y - 1 }
-    case 'down':
-      return { x: head.x, y: head.y + 1 }
-    case 'left':
-      return { x: head.x - 1, y: head.y }
-    case 'right':
-      return { x: head.x + 1, y: head.y }
-  }
-}
-
-const randomFreeCell = (snake: Vec[]): Vec => {
-  const occupied = new Set(snake.map((p) => `${p.x},${p.y}`))
-
-  // Try random sampling first.
-  for (let i = 0; i < 200; i++) {
-    const x = Math.floor(Math.random() * GRID_SIZE)
-    const y = Math.floor(Math.random() * GRID_SIZE)
-    const key = `${x},${y}`
-    if (!occupied.has(key)) return { x, y }
-  }
-
-  // Fallback: deterministic scan.
-  for (let y = 0; y < GRID_SIZE; y++) {
-    for (let x = 0; x < GRID_SIZE; x++) {
-      const key = `${x},${y}`
-      if (!occupied.has(key)) return { x, y }
-    }
-  }
-
-  // Should only happen when the snake fills the board.
-  return { x: 0, y: 0 }
-}
-
-const initialState = (): GameState => {
-  const snake: Vec[] = [
-    { x: 10, y: 10 },
-    { x: 9, y: 10 },
-    { x: 8, y: 10 },
-  ]
-
-  return {
-    snake,
-    direction: 'right',
-    food: randomFreeCell(snake),
-    score: 0,
-    running: false,
-    gameOver: false,
-  }
-}
+import {
+  GRID_SIZE,
+  TICK_MS,
+  initialState,
+  isOpposite,
+  stepGame,
+  type Direction,
+  type GameState,
+} from './snakeLogic'
 
 export function SnakeGame() {
   const [state, setState] = useState<GameState>(() => initialState())
@@ -128,53 +58,7 @@ export function SnakeGame() {
     if (!state.running || state.gameOver) return
 
     const id = window.setInterval(() => {
-      setState((s) => {
-        if (!s.running || s.gameOver) return s
-
-        const head = s.snake[0]
-        const newHead = move(head, s.direction)
-
-        const outOfBounds =
-          newHead.x < 0 ||
-          newHead.y < 0 ||
-          newHead.x >= GRID_SIZE ||
-          newHead.y >= GRID_SIZE
-
-        if (outOfBounds) {
-          return { ...s, running: false, gameOver: true }
-        }
-
-        const willEat = isSame(newHead, s.food)
-
-        // If we are not eating, the tail will move away, so exclude it from self-collision.
-        const bodyToCheck = willEat ? s.snake : s.snake.slice(0, -1)
-        const hitsSelf = bodyToCheck.some((p) => isSame(p, newHead))
-
-        if (hitsSelf) {
-          return { ...s, running: false, gameOver: true }
-        }
-
-        const nextSnake = [newHead, ...s.snake]
-        if (!willEat) nextSnake.pop()
-
-        if (willEat) {
-          const nextScore = s.score + 1
-          const nextFood = randomFreeCell(nextSnake)
-
-          // Win condition: board filled.
-          const filled = nextScore + 3 >= GRID_SIZE * GRID_SIZE
-          return {
-            ...s,
-            snake: nextSnake,
-            food: nextFood,
-            score: nextScore,
-            running: filled ? false : s.running,
-            gameOver: filled ? true : s.gameOver,
-          }
-        }
-
-        return { ...s, snake: nextSnake }
-      })
+      setState((s) => stepGame(s))
     }, TICK_MS)
 
     return () => window.clearInterval(id)

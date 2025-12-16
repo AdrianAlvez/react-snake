@@ -1,73 +1,49 @@
-# React + TypeScript + Vite
+# Snake (React + TypeScript + Vite)
+Juego clásico de Snake implementado como SPA con React.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Reglas
+- Mueves la serpiente por una grilla.
+- Si comes la comida, la serpiente crece y el puntaje aumenta.
+- Las paredes **no** causan colisión: hay **wrap-around** (sales por un borde y reapareces por el opuesto).
+- Pierdes únicamente si la cabeza choca contra alguna parte de tu propia serpiente.
 
-Currently, two official plugins are available:
+## Controles
+- Flechas o WASD: mover.
+- Espacio: pausar / reanudar.
+- R: reiniciar.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Comandos
+Instalación:
+- `npm install`
 
-## React Compiler
+Desarrollo (Vite + HMR):
+- `npm run dev`
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Build (TypeScript + Vite):
+- `npm run build`
 
-## Expanding the ESLint configuration
+Previsualizar build:
+- `npm run preview`
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Lint:
+- `npm run lint`
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Tests (Vitest):
+- `npm test` (watch)
+- `npm run test:run` (una sola corrida)
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Estructura del proyecto
+- `index.html`: entrada HTML.
+- `vite.config.ts`: configuración de Vite.
+- `eslint.config.js`: configuración de ESLint (flat config).
+- `src/main.tsx`: monta la app React.
+- `src/App.tsx`: wrapper mínimo que renderiza el juego.
+- `src/SnakeGame.tsx`: componente principal (UI + input + loop del juego).
+- `src/snakeLogic.ts`: lógica pura (movimiento, tick, generación de comida). Es el punto principal para unit tests.
+- `src/snakeLogic.test.ts`: tests unitarios de la lógica.
+- `src/index.css`, `src/App.css`: estilos.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Notas de implementación
+- El juego corre por “ticks” (intervalo) y aplica una transición de estado pura (`stepGame`).
+- La comida se genera en una celda libre usando `randomFreeCell`.
+- Para tests determinísticos, la lógica permite inyectar un `rng` (generador aleatorio).
